@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة تحكم المنتجات المتقدمة</title>
+<style>
+body { font-family:'Arial',sans-serif; margin:0; padding:20px; background:#f0f2f5; }
+h2 { text-align:center; margin-bottom:20px; color:#333; }
+
+/* واجهة الصفحات */
+.pages-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:15px; margin-bottom:20px; }
+.page-card { background:#fff; padding:20px; text-align:center; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); cursor:pointer; transition:0.2s; font-weight:bold; color:#333; }
+.page-card:hover { transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,0.2); }
+
+/* البحث */
+#searchContainer { display:flex; justify-content:flex-start; align-items:center; margin-bottom:10px; gap:10px; }
+#searchInput { padding:8px; border-radius:5px; border:1px solid #ccc; flex:1; }
+#searchOption { padding:8px; border-radius:5px; border:1px solid #ccc; }
+
+/* جدول المنتجات */
+.products-table { width:100%; border-collapse:collapse; display:none; margin-top:20px; background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 4px 8px rgba(0,0,0,0.1); }
+.products-table th, .products-table td { padding:10px; text-align:center; border-bottom:1px solid #eee; }
+.products-table th { background:#f7f7f7; }
+.product-name, .product-price { width:100%; border:none; background:transparent; text-align:center; }
+
+/* القائمة الثلاث نقاط */
+.dropdown { position:relative; display:inline-block; cursor:pointer; }
+.dropdown-content { display:none; position:absolute; right:0; background-color:#f9f9f9; min-width:120px; box-shadow:0 4px 8px rgba(0,0,0,0.1); z-index:1; border-radius:6px; overflow:hidden; }
+.dropdown-content button { width:100%; padding:8px; border:none; background:#fff; text-align:left; cursor:pointer; font-size:14px; }
+.dropdown-content button:hover { background:#f1f1f1; }
+
+/* إضافة منتج */
+#addProductForm { display:none; margin-bottom:10px; }
+#addProductForm input { width:30%; padding:6px; margin-right:5px; border-radius:5px; border:1px solid #ccc; }
+#addProductForm button { padding:6px 12px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer; }
+
+#saveBtn { margin-top:10px; padding:8px 12px; border:none; border-radius:6px; background:#28a745; color:#fff; cursor:pointer; display:none; }
+
+@media(max-width:600px){ #addProductForm input { width:100%; margin-bottom:5px; } }
+</style>
+</head>
+<body>
+<h2>لوحة تحكم المنتجات المتقدمة</h2>
+
+<!-- الصفحات -->
+<div class="pages-grid" id="pagesGrid"></div>
+
+<!-- البحث -->
+<div id="searchContainer" style="display:none;">
+  <select id="searchOption">
+    <option value="name">بحث بالاسم</option>
+    <option value="price">بحث بالسعر</option>
+  </select>
+  <input type="text" id="searchInput" placeholder="ابحث عن المنتج..." oninput="filterProducts()">
+</div>
+
+<!-- إضافة منتج -->
+<div id="addProductForm">
+  <input type="text" id="productName" placeholder="اسم المنتج">
+  <input type="number" id="productPrice" placeholder="السعر">
+  <input type="text" id="productImage" placeholder="رابط الصورة">
+  <button onclick="addProduct()">إضافة</button>
+</div>
+
+<!-- جدول المنتجات -->
+<table class="products-table" id="productTable">
+  <thead>
+    <tr>
+      <th>الصورة</th>
+      <th>الاسم</th>
+      <th>السعر</th>
+      <th>خيارات</th>
+    </tr>
+  </thead>
+  <tbody id="productTableBody"></tbody>
+</table>
+
+<button id="saveBtn" onclick="saveChanges()">حفظ التعديلات</button>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDQ2ZkGiIKE5odbXsZD03on_OcIuUbkJmg",
+  authDomain: "pharmacy-store-bc240.firebaseapp.com",
+  projectId: "pharmacy-store-bc240",
+  storageBucket: "pharmacy-store-bc240.appspot.com",
+  messagingSenderId: "328904695111",
+  appId: "1:328904695111:web:4c4d8625e463d127af8062",
+  measurementId: "G-FDCS1S483F"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const pages = ["Index.html","Childrens-supplies","Dental-care","Deodorants-perfumes","Diapers","Dyes","Good-supplies","Hair","Offer","Sensitive-area-care","Shaving-supplies","Skin","Sunscreen"];
+const manualProducts = {
+  "Index.html":[{name:"منتج 1", price:10, image:"https://via.placeholder.com/50"}],
+  "Childrens-supplies":[{name:"منتج 2", price:20, image:"https://via.placeholder.com/50"}],
+};
+
+const pagesGrid=document.getElementById("pagesGrid");
+const productTable=document.getElementById("productTable");
+const productTableBody=document.getElementById("productTableBody");
+const addProductForm=document.getElementById("addProductForm");
+const saveBtn=document.getElementById("saveBtn");
+const searchInput=document.getElementById("searchInput");
+const searchOption=document.getElementById("searchOption");
+const searchContainer=document.getElementById("searchContainer");
+
+let currentPage="";
+let products=[];
+
+// أيقونات الصفحات
+pages.forEach(page=>{
+  const div=document.createElement("div");
+  div.className="page-card";
+  div.innerText=page;
+  div.onclick=()=>selectPage(page);
+  pagesGrid.appendChild(div);
+});
+
+// اختيار صفحة
+async function selectPage(page){
+  currentPage=page;
+  pagesGrid.style.display="none";
+  addProductForm.style.display="block";
+  productTable.style.display="table";
+  saveBtn.style.display="inline-block";
+  searchContainer.style.display="flex";
+
+  products=[];
+
+  // جلب من Firebase
+  const querySnapshot = await getDocs(collection(db,page));
+  querySnapshot.forEach(docSnap=>{
+    products.push({id:docSnap.id, ...docSnap.data()});
+  });
+
+  // إضافة المنتجات اليدوية
+  if(manualProducts[page]) products.push(...manualProducts[page]);
+
+  renderTable();
+}
+
+// عرض المنتجات
+function renderTable(){
+  productTableBody.innerHTML="";
+  products.forEach((p,i)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`
+      <td><img src="${p.image||'https://via.placeholder.com/50'}" width="50" height="50"></td>
+      <td class="product-name">${p.name}</td>
+      <td class="product-price">${p.price}</td>
+      <td>
+        <div class="dropdown" onclick="toggleDropdown(${i})">⋮
+          <div class="dropdown-content" id="dropdown-${i}">
+            <button onclick="editProduct(${i})">تعديل</button>
+            <button onclick="deleteProduct(${i})">مسح</button>
+          </div>
+        </div>
+      </td>
+    `;
+    productTableBody.appendChild(tr);
+  });
+}
+
+// فتح/إغلاق القائمة
+function toggleDropdown(i){
+  const el=document.getElementById(dropdown-${i});
+  el.style.display=el.style.display==='block'?'none':'block';
+}
+
+// إضافة منتج
+function addProduct(){
+  const name=document.getElementById("productName").value;
+  const price=parseFloat(document.getElementById("productPrice").value);
+  const image=document.getElementById("productImage").value;
+  if(!name||!price){alert("ادخل الاسم والسعر"); return;}
+  products.push({name,price,image});
+  renderTable();
+  document.getElementById("productName").value="";
+  document.getElementById("productPrice").value="";
+  document.getElementById("productImage").value="";
+}
+
+// تعديل منتج
+function editProduct(i){
+  const newName=prompt("تعديل الاسم:", products[i].name);
+  if(newName!==null) products[i].name=newName;
+  const newPrice=prompt("تعديل السعر:", products[i].price);
+  if(newPrice!==null) products[i].price=parseFloat(newPrice);
+  const newImage=prompt("تعديل رابط الصورة:", products[i].image);
+  if(newImage!==null) products[i].image=newImage;
+  alert("تم تعديل المنتج ✅");
+  renderTable();
+}
+
+// حذف المنتج
+async function deleteProduct(i){
+  if(!confirm("هل تريد حذف المنتج؟")) return;
+  if(products[i].id){await deleteDoc(doc(db,currentPage,products[i].id));}
+  products.splice(i,1);
+  alert("تم حذف المنتج ✅");
+  renderTable();
+}
+
+// حفظ التعديلات
+async function saveChanges(){
+  for(const p of products){
+    if(p.id){ await updateDoc(doc(db,currentPage,p.id),{name:p.name,price:p.price,image:p.image});}
+    else{ await addDoc(collection(db,currentPage),{name:p.name,price:p.price,image:p.image}); }
+  }
+  alert("تم حفظ جميع التعديلات ✅");
+  selectPage(currentPage);
+}
+
+// بحث متقدم
+function filterProducts(){
+  const val=searchInput.value.toLowerCase();
+  const opt=searchOption.value;
+  productTableBody.querySelectorAll("tr").forEach((tr,i)=>{
+    const name=products[i].name.toLowerCase();
+    const price=products[i].price.toString();
+    const show=(opt==='name')? name.includes(val) : price.includes(val);
+    tr.style.display=show?"":"none";
+  });
+}
+</script>
+</body>
+</html>
