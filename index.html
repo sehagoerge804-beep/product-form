@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
 <title>لوحة إدارة الصيدلية</title>
 
 <style>
 *{box-sizing:border-box}
 body{
  margin:0;
- font-family:Arial, sans-serif;
+ font-family:Arial, "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
  background:#f4f6f8;
  direction:rtl;
 }
@@ -182,149 +183,7 @@ body{
  </form>
 </div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-/* Firebase */
-const app = initializeApp({
- apiKey: "AIzaSyDQ2ZkGiIKE5odbXsZD03on_OcIuUbkJmg",
- authDomain: "pharmacy-store-bc240.firebaseapp.com",
- projectId: "pharmacy-store-bc240"
-});
-const db = getFirestore(app);
-
-/* صفحات المشروع الكبير */
-const pagesData = {
- "Index.html":"🏠",
- "Childrens-supplies":"👶",
- "Dental-care":"🦷",
- "Deodorants-perfumes":"🌸",
- "Diapers":"🧷",
- "Dyes":"🎨",
- "Good-supplies":"🛍️",
- "Hair":"💇‍♀️",
- "Offer":"🏷️",
- "Sensitive-area-care":"🧴",
- "Shaving-supplies":"🪒",
- "Skin":"🧴",
- "Sunscreen":"☀️"
-};
-
-const pages=document.getElementById("pages");
-const productsDiv=document.getElementById("products");
-const popup=document.getElementById("popup");
-
-let currentPage="", products=[], editId=null;
-
-/* إنشاء الأيقونات */
-for(let p in pagesData){
- pages.innerHTML+=`
- <div class="page" onclick="openPage('${p}')">
- ${pagesData[p]}<br>${p}
- </div>`;
-}
-
-/* فتح صفحة */
-window.openPage=async(p)=>{
- currentPage=p;
- pages.style.display="none";
- header.style.display="flex";
- searchBox.style.display="flex";
- productsDiv.style.display="grid";
- loadProducts();
-}
-
-/* تحميل المنتجات */
-async function loadProducts(){
- products=[];
- const snap=await getDocs(collection(db,currentPage));
- snap.forEach(d=>products.push({id:d.id,...d.data()}));
- render();
-}
-
-/* عرض */
-function render(){
- productsDiv.innerHTML="";
- products.forEach((p,i)=>{
-  productsDiv.innerHTML+=`
-  <div class="card">
-   <div class="menu" onclick="this.children[0].style.display='block'">⋮
-    <div class="menu-content">
-     <button onclick="editProduct(${i})">تعديل</button>
-     <button onclick="deleteProduct('${p.id}')">حذف</button>
-    </div>
-   </div>
-   <img src="${p.image||'https://via.placeholder.com/100'}">
-   <h4>${p.name}</h4>
-   <span>${p.price} ج</span>
-  </div>`;
- });
-}
-
-/* إضافة */
-addBtn.onclick=()=>{
- editId=null;
- pName.value="";pPrice.value="";pImg.value="";
- popup.style.display="flex";
-}
-
-/* حفظ */
-window.saveProduct=async(e)=>{
- e.preventDefault();
- if(editId){
-  await updateDoc(doc(db,currentPage,editId),{
-   name:pName.value,price:+pPrice.value,image:pImg.value
-  });
- }else{
-  await addDoc(collection(db,currentPage),{
-   name:pName.value,price:+pPrice.value,image:pImg.value
-  });
- }
- popup.style.display="none";
- loadProducts();
- alert("تم الحفظ بنجاح ✅");
-}
-
-/* تعديل */
-window.editProduct=(i)=>{
- const p=products[i];
- editId=p.id;
- pName.value=p.name;
- pPrice.value=p.price;
- pImg.value=p.image||"";
- popup.style.display="flex";
-}
-
-/* حذف */
-window.deleteProduct=async(id)=>{
- if(confirm("هل تريد حذف المنتج؟")){
-  await deleteDoc(doc(db,currentPage,id));
-  loadProducts();
-  alert("تم حذف المنتج ✅");
- }
-}
-
-/* بحث */
-window.filterProducts=()=>{
- const v=searchInput.value.toLowerCase();
- const t=searchType.value;
- document.querySelectorAll(".card").forEach((c,i)=>{
-  const ok=t==="name"
-   ? products[i].name.toLowerCase().includes(v)
-   : products[i].price.toString().includes(v);
-  c.style.display=ok?"block":"none";
- });
-}
-
-/* رجوع */
-backBtn.onclick=()=>{
- pages.style.display="grid";
- header.style.display="none";
- searchBox.style.display="none";
- productsDiv.style.display="none";
-};
-</script>
+<script src="admin-dashboard.js" type="module"></script>
 
 </body>
 </html>
