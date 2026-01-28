@@ -3,249 +3,328 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>لوحة التحكم المتقدمة</title>
+<title>لوحة إدارة الصيدلية</title>
+
 <style>
-body { font-family:'Arial',sans-serif; margin:0; padding:20px; background:#f0f2f5; }
-h2 { text-align:center; margin-bottom:20px; color:#333; }
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Arial, sans-serif;
+ background:#f4f6f8;
+ direction:rtl;
+}
 
-/* واجهة الصفحات */
-.pages-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:15px; margin-bottom:20px; }
-.page-card { background:#fff; padding:20px; text-align:center; border-radius:12px; box-shadow:0 4px 8px rgba(0,0,0,0.1); cursor:pointer; transition:0.2s; font-weight:bold; color:#333; }
-.page-card:hover { transform:scale(1.05); box-shadow:0 6px 12px rgba(0,0,0,0.2); }
+/* ===== الصفحات ===== */
+#pages{
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+ gap:15px;
+ padding:20px;
+}
+.page{
+ background:#fff;
+ border-radius:16px;
+ padding:25px 10px;
+ text-align:center;
+ font-size:16px;
+ font-weight:bold;
+ cursor:pointer;
+ box-shadow:0 4px 10px rgba(0,0,0,.1);
+ transition:.3s;
+}
+.page:hover{transform:scale(1.05)}
 
-/* البحث */
-#searchContainer { display:flex; justify-content:flex-start; align-items:center; margin-bottom:10px; gap:10px; display:none; }
-#searchInput { padding:8px; border-radius:5px; border:1px solid #ccc; flex:1; }
-#searchOption { padding:8px; border-radius:5px; border:1px solid #ccc; }
+/* ===== الهيدر ===== */
+#header{
+ display:none;
+ justify-content:space-between;
+ align-items:center;
+ padding:15px;
+ background:#fff;
+ box-shadow:0 2px 8px rgba(0,0,0,.1);
+}
+#header button{
+ padding:8px 14px;
+ border:none;
+ border-radius:10px;
+ cursor:pointer;
+}
+#backBtn{background:#555;color:#fff}
+#addBtn{background:#007bff;color:#fff}
 
-/* شبكة المنتجات */
-.products-grid { display:none; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:15px; }
-.product-card { background:#fff; border-radius:10px; padding:10px; box-shadow:0 2px 6px rgba(0,0,0,0.1); text-align:center; position:relative; transition:0.2s; }
-.product-card:hover { transform:scale(1.02); }
-.product-card img { width:100px; height:100px; object-fit:cover; border-radius:8px; margin-bottom:5px; }
-.product-card input { width:90%; margin-bottom:5px; border:none; text-align:center; font-weight:bold; }
-.product-card .price { color:#555; margin-bottom:5px; }
-.product-card .dropdown { position:absolute; top:10px; right:10px; cursor:pointer; font-size:20px; }
-.dropdown-content { display:none; position:absolute; top:30px; right:0; background:#fff; min-width:100px; box-shadow:0 2px 6px rgba(0,0,0,0.2); border-radius:6px; overflow:hidden; z-index:1; }
-.dropdown-content button { width:100%; padding:5px; border:none; background:#fff; cursor:pointer; text-align:left; }
-.dropdown-content button:hover { background:#f1f1f1; }
+/* ===== البحث ===== */
+#searchBox{
+ display:none;
+ padding:10px;
+ gap:10px;
+}
+#searchBox input,#searchBox select{
+ padding:8px;
+ border-radius:10px;
+ border:1px solid #ccc;
+}
 
-/* إضافة منتج */
-#addProductForm { display:none; margin-bottom:10px; }
-#addProductForm input { width:30%; padding:6px; margin-right:5px; border-radius:5px; border:1px solid #ccc; }
-#addProductForm button { padding:6px 12px; border:none; border-radius:5px; background:#007bff; color:#fff; cursor:pointer; }
+/* ===== المنتجات ===== */
+#products{
+ display:none;
+ padding:15px;
+ display:grid;
+ grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+ gap:15px;
+}
+.card{
+ background:#fff;
+ border-radius:14px;
+ padding:10px;
+ text-align:center;
+ position:relative;
+ box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+.card img{
+ width:90px;height:90px;
+ border-radius:10px;
+ object-fit:cover;
+}
+.card h4{margin:6px 0;font-size:15px}
+.card span{color:#555;font-size:14px}
 
-#saveBtn { margin-top:10px; padding:8px 12px; border:none; border-radius:6px; background:#28a745; color:#fff; cursor:pointer; display:none; }
+/* ===== القائمة ===== */
+.menu{
+ position:absolute;
+ top:8px;
+ left:8px;
+ cursor:pointer;
+}
+.menu-content{
+ display:none;
+ position:absolute;
+ top:20px;
+ left:0;
+ background:#fff;
+ border-radius:8px;
+ box-shadow:0 2px 6px rgba(0,0,0,.2);
+ overflow:hidden;
+}
+.menu-content button{
+ width:100%;
+ border:none;
+ background:none;
+ padding:8px 12px;
+ cursor:pointer;
+ text-align:right;
+}
 
-@media(max-width:600px){ .products-grid { grid-template-columns:repeat(2,1fr); } #addProductForm input { width:100%; margin-bottom:5px; } }
+/* ===== Popup ===== */
+#popup{
+ display:none;
+ position:fixed;
+ inset:0;
+ background:rgba(0,0,0,.5);
+ justify-content:center;
+ align-items:center;
+}
+#popup form{
+ background:#fff;
+ padding:20px;
+ border-radius:16px;
+ width:90%;
+ max-width:320px;
+}
+#popup input{
+ width:100%;
+ margin-bottom:10px;
+ padding:8px;
+ border-radius:10px;
+ border:1px solid #ccc;
+}
+#popup button{
+ width:100%;
+ padding:10px;
+ border:none;
+ border-radius:12px;
+ background:#28a745;
+ color:#fff;
+ font-size:16px;
+}
 </style>
 </head>
+
 <body>
-<h2>لوحة التحكم المتقدمة</h2>
 
 <!-- الصفحات -->
-<div class="pages-grid" id="pagesGrid"></div>
+<div id="pages"></div>
+
+<!-- الهيدر -->
+<div id="header">
+ <button id="backBtn">⬅ رجوع</button>
+ <button id="addBtn">➕ إضافة منتج</button>
+</div>
 
 <!-- البحث -->
-<div id="searchContainer">
-  <select id="searchOption">
-    <option value="name">بحث بالاسم</option>
-    <option value="price">بحث بالسعر</option>
-  </select>
-  <input type="text" id="searchInput" placeholder="ابحث عن المنتج..." oninput="filterProducts()">
+<div id="searchBox">
+ <select id="searchType">
+  <option value="name">بحث بالاسم</option>
+  <option value="price">بحث بالسعر</option>
+ </select>
+ <input id="searchInput" placeholder="بحث..." oninput="filterProducts()">
 </div>
 
-<!-- إضافة منتج -->
-<div id="addProductForm">
-  <input type="text" id="productName" placeholder="اسم المنتج">
-  <input type="number" id="productPrice" placeholder="السعر">
-  <input type="text" id="productImage" placeholder="رابط الصورة">
-  <button onclick="addProduct()">إضافة</button>
+<!-- المنتجات -->
+<div id="products"></div>
+
+<!-- Popup -->
+<div id="popup">
+ <form onsubmit="saveProduct(event)">
+  <input id="pName" placeholder="اسم المنتج" required>
+  <input id="pPrice" type="number" placeholder="السعر" required>
+  <input id="pImg" placeholder="رابط الصورة">
+  <button>حفظ</button>
+ </form>
 </div>
 
-<!-- شبكة المنتجات -->
-<div class="products-grid" id="productsGrid"></div>
-
-<button id="saveBtn" onclick="saveChanges()">حفظ التعديلات</button>
-
-<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, updateDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDQ2ZkGiIKE5odbXsZD03on_OcIuUbkJmg",
-  authDomain: "pharmacy-store-bc240.firebaseapp.com",
-  projectId: "pharmacy-store-bc240",
-  storageBucket: "pharmacy-store-bc240.appspot.com",
-  messagingSenderId: "328904695111",
-  appId: "1:328904695111:web:4c4d8625e463d127af8062",
-  measurementId: "G-FDCS1S483F"
-};
-
-const app = initializeApp(firebaseConfig);
+/* Firebase */
+const app = initializeApp({
+ apiKey: "AIzaSyDQ2ZkGiIKE5odbXsZD03on_OcIuUbkJmg",
+ authDomain: "pharmacy-store-bc240.firebaseapp.com",
+ projectId: "pharmacy-store-bc240"
+});
 const db = getFirestore(app);
 
-// الصفحات
-const pages = ["Index.html","Childrens-supplies","Dental-care","Deodorants-perfumes","Diapers","Dyes","Good-supplies","Hair","Offer","Sensitive-area-care","Shaving-supplies","Skin","Sunscreen"];
-
-// منتجات يدوية موجودة مسبقًا
-const manualProducts = {
-  "Index.html":[{name:"منتج 1", price:10, image:"https://via.placeholder.com/50"}],
-  "Childrens-supplies":[{name:"منتج 2", price:20, image:"https://via.placeholder.com/50"}],
+/* صفحات المشروع الكبير */
+const pagesData = {
+ "Index.html":"🏠",
+ "Childrens-supplies":"👶",
+ "Dental-care":"🦷",
+ "Deodorants-perfumes":"🌸",
+ "Diapers":"🧷",
+ "Dyes":"🎨",
+ "Good-supplies":"🛍️",
+ "Hair":"💇‍♀️",
+ "Offer":"🏷️",
+ "Sensitive-area-care":"🧴",
+ "Shaving-supplies":"🪒",
+ "Skin":"🧴",
+ "Sunscreen":"☀️"
 };
 
-const pageIcons = {
-  "Index.html": "🏠",
-  "Childrens-supplies": "👶",
-  "Dental-care": "🦷",
-  "Deodorants-perfumes": "🌸",
-  "Diapers": "🧷",
-  "Dyes": "🎨",
-  "Good-supplies": "🛍️",
-  "Hair": "💇‍♀️",
-  "Offer": "🏷️",
-  "Sensitive-area-care": "🧴",
-  "Shaving-supplies": "🪒",
-  "Skin": "🧴",
-  "Sunscreen": "☀️"
-};
+const pages=document.getElementById("pages");
+const productsDiv=document.getElementById("products");
+const popup=document.getElementById("popup");
 
-const pagesGrid=document.getElementById("pagesGrid");
-const productsGrid=document.getElementById("productsGrid");
-const addProductForm=document.getElementById("addProductForm");
-const saveBtn=document.getElementById("saveBtn");
-const searchInput=document.getElementById("searchInput");
-const searchOption=document.getElementById("searchOption");
-const searchContainer=document.getElementById("searchContainer");
+let currentPage="", products=[], editId=null;
 
-let currentPage="";
-let products=[];
-let edited=false;
+/* إنشاء الأيقونات */
+for(let p in pagesData){
+ pages.innerHTML+=`
+ <div class="page" onclick="openPage('${p}')">
+ ${pagesData[p]}<br>${p}
+ </div>`;
+}
 
-// إنشاء أيقونات الصفحات
-pages.forEach(page=>{
-  const div=document.createElement("div");
-  div.className="page-card";
-  div.innerHTML = `${pageIcons[page] || ''} ${page}`;
-  div.onclick=()=>selectPage(page);
-  pagesGrid.appendChild(div);
-});
+/* فتح صفحة */
+window.openPage=async(p)=>{
+ currentPage=p;
+ pages.style.display="none";
+ header.style.display="flex";
+ searchBox.style.display="flex";
+ productsDiv.style.display="grid";
+ loadProducts();
+}
 
-// اختيار صفحة
-async function selectPage(page){
-  currentPage=page;
-  pagesGrid.style.display="none";
-  addProductForm.style.display="block";
-  productsGrid.style.display="grid";
-  saveBtn.style.display="inline-block";
-  searchContainer.style.display="flex";
+/* تحميل المنتجات */
+async function loadProducts(){
+ products=[];
+ const snap=await getDocs(collection(db,currentPage));
+ snap.forEach(d=>products.push({id:d.id,...d.data()}));
+ render();
+}
 
-  products=[];
+/* عرض */
+function render(){
+ productsDiv.innerHTML="";
+ products.forEach((p,i)=>{
+  productsDiv.innerHTML+=`
+  <div class="card">
+   <div class="menu" onclick="this.children[0].style.display='block'">⋮
+    <div class="menu-content">
+     <button onclick="editProduct(${i})">تعديل</button>
+     <button onclick="deleteProduct('${p.id}')">حذف</button>
+    </div>
+   </div>
+   <img src="${p.image||'https://via.placeholder.com/100'}">
+   <h4>${p.name}</h4>
+   <span>${p.price} ج</span>
+  </div>`;
+ });
+}
 
-  // جلب منتجات Firebase
-  const querySnapshot = await getDocs(collection(db,page));
-  querySnapshot.forEach(docSnap=>{
-    products.push({id:docSnap.id, ...docSnap.data()});
+/* إضافة */
+addBtn.onclick=()=>{
+ editId=null;
+ pName.value="";pPrice.value="";pImg.value="";
+ popup.style.display="flex";
+}
+
+/* حفظ */
+window.saveProduct=async(e)=>{
+ e.preventDefault();
+ if(editId){
+  await updateDoc(doc(db,currentPage,editId),{
+   name:pName.value,price:+pPrice.value,image:pImg.value
   });
-
-  // إضافة المنتجات اليدوية
-  if(manualProducts[page]) products.push(...manualProducts[page]);
-
-  renderProducts();
-}
-
-// عرض المنتجات
-function renderProducts(){
-  productsGrid.innerHTML="";
-  products.forEach((p,i)=>{
-    const div=document.createElement("div");
-    div.className="product-card";
-    div.innerHTML=`
-      <img src="${p.image||'https://via.placeholder.com/100'}">
-      <input type="text" value="${p.name}" onchange="markEdited(${i},'name',this.value)">
-      <input type="number" value="${p.price}" onchange="markEdited(${i},'price',this.value)">
-      <div class="dropdown" onclick="toggleDropdown(${i})">⋮
-        <div class="dropdown-content" id="dropdown-${i}">
-          <button onclick="editProduct(${i})">تعديل</button>
-          <button onclick="deleteProduct(${i})">مسح</button>
-        </div>
-      </div>
-    `;
-    productsGrid.appendChild(div);
+ }else{
+  await addDoc(collection(db,currentPage),{
+   name:pName.value,price:+pPrice.value,image:pImg.value
   });
+ }
+ popup.style.display="none";
+ loadProducts();
+ alert("تم الحفظ بنجاح ✅");
 }
 
-// تمييز المنتج المعدل
-function markEdited(i,field,value){
-  products[i][field]=field==='price'? parseFloat(value):value;
-  edited=true;
+/* تعديل */
+window.editProduct=(i)=>{
+ const p=products[i];
+ editId=p.id;
+ pName.value=p.name;
+ pPrice.value=p.price;
+ pImg.value=p.image||"";
+ popup.style.display="flex";
 }
 
-// فتح/إغلاق القائمة
-function toggleDropdown(i){
-  const el=document.getElementById(`dropdown-${i}`);
-  el.style.display=el.style.display==='block'?'none':'block';
-}
-
-// إضافة منتج جديد
-function addProduct(){
-  const name=document.getElementById("productName").value;
-  const price=parseFloat(document.getElementById("productPrice").value);
-  const image=document.getElementById("productImage").value;
-  if(!name||!price){alert("ادخل الاسم والسعر"); return;}
-  products.push({name,price,image});
-  renderProducts();
-  document.getElementById("productName").value="";
-  document.getElementById("productPrice").value="";
-  document.getElementById("productImage").value="";
-  edited=true;
-}
-
-// تعديل المنتج
-function editProduct(i){
-  const newName=prompt("تعديل الاسم:", products[i].name);
-  if(newName!==null) products[i].name=newName;
-  const newPrice=prompt("تعديل السعر:", products[i].price);
-  if(newPrice!==null) products[i].price=parseFloat(newPrice);
-  const newImage=prompt("تعديل رابط الصورة:", products[i].image);
-  if(newImage!==null) products[i].image=newImage;
-  alert("تم تعديل المنتج ✅");
-  renderProducts();
-  edited=true;
-}
-
-// حذف المنتج
-async function deleteProduct(i){
-  if(!confirm("هل تريد حذف المنتج؟")) return;
-  if(products[i].id) await deleteDoc(doc(db,currentPage,products[i].id));
-  products.splice(i,1);
-  renderProducts();
+/* حذف */
+window.deleteProduct=async(id)=>{
+ if(confirm("هل تريد حذف المنتج؟")){
+  await deleteDoc(doc(db,currentPage,id));
+  loadProducts();
   alert("تم حذف المنتج ✅");
-  edited=true;
+ }
 }
 
-// حفظ التعديلات
-async function saveChanges(){
-  for(const p of products){
-    if(p.id) await updateDoc(doc(db,currentPage,p.id),{name:p.name,price:p.price,image:p.image});
-    else await addDoc(collection(db,currentPage),{name:p.name,price:p.price,image:p.image});
-  }
-  alert("تم حفظ جميع التعديلات ✅");
-  edited=false;
+/* بحث */
+window.filterProducts=()=>{
+ const v=searchInput.value.toLowerCase();
+ const t=searchType.value;
+ document.querySelectorAll(".card").forEach((c,i)=>{
+  const ok=t==="name"
+   ? products[i].name.toLowerCase().includes(v)
+   : products[i].price.toString().includes(v);
+  c.style.display=ok?"block":"none";
+ });
 }
 
-// البحث المتقدم
-function filterProducts(){
-  const val=searchInput.value.toLowerCase();
-  const opt=searchOption.value;
-  productsGrid.querySelectorAll(".product-card").forEach((card,i)=>{
-    const name=products[i].name.toLowerCase();
-    const price=products[i].price.toString();
-    card.style.display=(opt==='name'?name.includes(val):price.includes(val))?"block":"none";
-});
-}
+/* رجوع */
+backBtn.onclick=()=>{
+ pages.style.display="grid";
+ header.style.display="none";
+ searchBox.style.display="none";
+ productsDiv.style.display="none";
+};
 </script>
+
 </body>
 </html>
