@@ -1,0 +1,3 @@
+- [x] Add const declarations for missing DOM elements in admin-dashboard.js to fix button functionality, icon saving, and initial icon display issues.
+- [ ] Add page icons HTML directly to index.html for immediate display on website load.
+- [ ] Add missing const declarations for additional DOM elements in admin-dashboard.js.

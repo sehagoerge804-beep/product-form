@@ -19,7 +19,7 @@ const db = getFirestore(app);
 
 /* صفحات المشروع الكبير */
 const pagesData = {
-  "Index.html": "🏠",
+  "Index": "🏠",
   "Childrens-supplies": "👶",
   "Dental-care": "🦷",
   "Deodorants-perfumes": "🌸",
@@ -28,7 +28,6 @@ const pagesData = {
   "Good-supplies": "🛍️",
   "Hair": "💇‍♀️",
   "Offer": "🏷️",
-  "Sensitive-area-care": "🧴",
   "Shaving-supplies": "🪒",
   "Skin": "🧴",
   "Sunscreen": "☀️"
@@ -38,53 +37,57 @@ let currentPage = "";
 let products = [];
 let editId = null;
 
-window.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
   const pages = document.getElementById("pages");
   const productsDiv = document.getElementById("products");
   const popup = document.getElementById("popup");
 
-  /* إنشاء الأيقونات */
-  for (let p in pagesData) {
-    pages.innerHTML += `
-      <div class="page" onclick="openPage('${p}')">
-        ${pagesData[p]}<br>${p}
-      </div>
-    `;
-  }
+  const pName = document.getElementById("pName");
+  const pPrice = document.getElementById("pPrice");
+  const pImg = document.getElementById("pImg");
+
+
 
   /* فتح صفحة */
-  window.openPage = async (p) => {
-    currentPage = p;
+  window.openPage = async (page) => {
+    currentPage = page;
     pages.style.display = "none";
     header.style.display = "flex";
     searchBox.style.display = "flex";
     productsDiv.style.display = "grid";
-    loadProducts();
+    await loadProducts();
   };
 
-  /* تحميل المنتجات (من نفس مكان المشروع الكبير) */
+  /* تحميل المنتجات */
   async function loadProducts() {
     products = [];
     const snap = await getDocs(
-      collection(db, "products", currentPage)
+      collection(db, "products", currentPage, "items")
     );
-    snap.forEach((d) => products.push({ id: d.id, ...d.data() }));
-    render();
+
+    snap.forEach(docu => {
+      products.push({ id: docu.id, ...docu.data() });
+    });
+
+    renderProducts();
   }
 
   /* عرض المنتجات */
-  function render() {
+  function renderProducts() {
     productsDiv.innerHTML = "";
+
     products.forEach((p, i) => {
       productsDiv.innerHTML += `
         <div class="card">
-          <div class="menu" onclick="this.children[0].style.display='block'">⋮
+          <div class="menu">
+            <button class="dots" onclick="toggleMenu(this)">⋮</button>
             <div class="menu-content">
               <button onclick="editProduct(${i})">تعديل</button>
               <button onclick="deleteProduct('${p.id}')">حذف</button>
             </div>
           </div>
-          <img src="${p.image || "https://via.placeholder.com/100"}">
+
+          <img src="${p.image || 'https://via.placeholder.com/120'}">
           <h4>${p.name}</h4>
           <span>${p.price} ج</span>
         </div>
@@ -92,8 +95,14 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* إضافة منتج */
-  addBtn.onclick = () => {
+  /* إظهار / إخفاء المنيو */
+  window.toggleMenu = (btn) => {
+    document.querySelectorAll(".menu-content").forEach(m => m.style.display = "none");
+    btn.nextElementSibling.style.display = "block";
+  };
+
+  /* إضافة */
+  window.addProduct = () => {
     editId = null;
     pName.value = "";
     pPrice.value = "";
@@ -101,31 +110,56 @@ window.addEventListener("DOMContentLoaded", () => {
     popup.style.display = "flex";
   };
 
-  /* حفظ (إضافة أو تعديل) */
+  /* رجوع */
+  backBtn.addEventListener("click", () => {
+    currentPage = "";
+    pages.style.display = "grid";
+    header.style.display = "none";
+    searchBox.style.display = "none";
+    productsDiv.style.display = "none";
+  });
+
+  /* إضافة منتج */
+  addBtn.addEventListener("click", addProduct);
+
+  /* حفظ */
   window.saveProduct = async (e) => {
     e.preventDefault();
 
     const data = {
-      name: pName.value,
-      price: +pPrice.value,
-      image: pImg.value
+      name: pName.value.trim(),
+      price: Number(pPrice.value),
+      image: pImg.value.trim()
     };
 
-    if (editId) {
-      await updateDoc(
-        doc(db, "products", currentPage, editId),
-        data
-      );
-    } else {
-      await addDoc(
-        collection(db, "products", currentPage),
-        data
-      );
-    }
+    try {
+      if (editId) {
+        await updateDoc(
+          doc(db, "products", currentPage, "items", editId),
+          data
+        );
+        // Update the product in the local array
+        const index = products.findIndex(p => p.id === editId);
+        if (index !== -1) {
+          products[index] = { ...products[index], ...data };
+        }
+        alert("تم حفظ التعديل بنجاح");
+      } else {
+        const docRef = await addDoc(
+          collection(db, "products", currentPage, "items"),
+          data
+        );
+        // Add the new product to the local array
+        products.push({ id: docRef.id, ...data });
+        alert("تم الحفظ بنجاح");
+      }
 
-    popup.style.display = "none";
-    loadProducts();
-    alert("تم الحفظ بنجاح ✅");
+      popup.style.display = "none";
+      renderProducts();
+    } catch (error) {
+      console.error("Error saving product:", error);
+      alert("حدث خطأ في حفظ المنتج. يرجى المحاولة مرة أخرى.");
+    }
   };
 
   /* تعديل */
@@ -140,33 +174,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
   /* حذف */
   window.deleteProduct = async (id) => {
-    if (confirm("هل تريد حذف المنتج؟")) {
-      await deleteDoc(
-        doc(db, "products", currentPage, id)
-      );
-      loadProducts();
-      alert("تم حذف المنتج ✅");
-    }
-  };
+    if (!confirm("متأكد من الحذف؟")) return;
 
-  /* بحث */
-  window.filterProducts = () => {
-    const v = searchInput.value.toLowerCase();
-    const t = searchType.value;
-    document.querySelectorAll(".card").forEach((c, i) => {
-      const ok =
-        t === "name"
-          ? products[i].name.toLowerCase().includes(v)
-          : products[i].price.toString().includes(v);
-      c.style.display = ok ? "block" : "none";
-    });
-  };
+    await deleteDoc(
+      doc(db, "products", currentPage, "items", id)
+    );
 
-  /* رجوع */
-  backBtn.onclick = () => {
-    pages.style.display = "grid";
-    header.style.display = "none";
-    searchBox.style.display = "none";
-    productsDiv.style.display = "none";
+    await loadProducts();
   };
 });
