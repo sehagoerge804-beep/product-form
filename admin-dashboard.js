@@ -62,7 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function loadProducts() {
     products = [];
     const snap = await getDocs(
-      collection(db, "products", currentPage, "items")
+      collection(db, currentPage)
     );
 
     snap.forEach(docu => {
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       if (editId) {
         await updateDoc(
-          doc(db, "products", currentPage, "items", editId),
+          doc(db, currentPage, editId),
           data
         );
         // Update the product in the local array
@@ -146,7 +146,7 @@ document.addEventListener("DOMContentLoaded", () => {
         alert("تم حفظ التعديل بنجاح");
       } else {
         const docRef = await addDoc(
-          collection(db, "products", currentPage, "items"),
+          collection(db, currentPage),
           data
         );
         // Add the new product to the local array
@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!confirm("متأكد من الحذف؟")) return;
 
     await deleteDoc(
-      doc(db, "products", currentPage, "items", id)
+      doc(db, currentPage, id)
     );
 
     await loadProducts();
